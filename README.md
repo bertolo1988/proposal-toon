@@ -1,50 +1,136 @@
-# template-for-proposals
+# ECMAScript Proposal: `TOON` (Token-Oriented Object Notation)
 
-A repository template for ECMAScript proposals.
+**Stage:** 0  
+**Champions:** *Seeking Champion*  
+**Proposal Drafter:** Tiago Bertolo ([@bertolo1988](https://github.com/bertolo1988))  
+**TOON Format Creator & Specification Author:** Johann Schopplich ([@johannschopplich](https://github.com/johannschopplich), [toon-format](https://github.com/toon-format))  
 
-## Before creating a proposal
+---
 
-Please ensure the following:
-  1. You have read the [process document](https://tc39.github.io/process-document/)
-  1. You have reviewed the [existing proposals](https://github.com/tc39/proposals/)
-  1. You are aware that your proposal requires being a member of TC39, or locating a TC39 delegate to “champion” your proposal
+## Attribution & Acknowledgements
 
-## Create your proposal repo
+The **TOON (Token-Oriented Object Notation)** format and specification were designed and authored by **Johann Schopplich**.
 
-Follow these steps:
-  1. Click the green [“use this template”](https://github.com/tc39/template-for-proposals/generate) button in the repo header. (Note: Do not fork this repo in GitHub's web interface, as that will later prevent transfer into the TC39 organization)
-  1. Update ecmarkup and the biblio to the latest version: `npm install --save-dev ecmarkup@latest && npm install --save-dev --save-exact @tc39/ecma262-biblio@latest`.
-  1. Go to your repo settings page:
-      1. Under “General”, under “Features”, ensure “Issues” is checked, and disable “Wiki”, and “Projects” (unless you intend to use Projects)
-      1. Under “Pull Requests”, check “Always suggest updating pull request branches” and “automatically delete head branches”
-      1. Under the “Pages” section on the left sidebar, and set the source to “deploy from a branch”, select “gh-pages” in the branch dropdown, and then ensure that “Enforce HTTPS” is checked.
-      1. Under the “Actions” section on the left sidebar, under “General”, select “Read and write permissions” under “Workflow permissions” and click “Save”
-  1. [“How to write a good explainer”][explainer] explains how to make a good first impression.
+- Official Website & Documentation: [toonformat.dev](https://toonformat.dev)
+- Specification Repository: [github.com/toon-format/spec](https://github.com/toon-format/spec)
+- Reference Implementation: [github.com/toon-format/toon](https://github.com/toon-format/toon)
 
-      > Each TC39 proposal should have a `README.md` file which explains the purpose
-      > of the proposal and its shape at a high level.
-      >
-      > ...
-      >
-      > The rest of this page can be used as a template ...
+*Note: This proposal repository is an effort to bring native `TOON` serialization and parsing capabilities into the ECMAScript standard. The proposal author (@bertolo1988) is solely drafting this proposal for TC39 consideration, and full credit for the underlying format, grammar, and design belongs to Johann Schopplich and the TOON community.*
 
-      Your explainer can point readers to the `index.html` generated from `spec.emu`
-      via markdown like
+---
 
-      ```markdown
-      You can browse the [ecmarkup output](https://ACCOUNT.github.io/PROJECT/)
-      or browse the [source](https://github.com/ACCOUNT/PROJECT/blob/HEAD/spec.emu).
-      ```
+## Status
 
-      where *ACCOUNT* and *PROJECT* are the first two path elements in your project's Github URL.
-      For example, for github.com/**tc39**/**template-for-proposals**, *ACCOUNT* is “tc39”
-      and *PROJECT* is “template-for-proposals”.
+This proposal is currently **Stage 0** in the [TC39 Process](https://tc39.es/process-document/).
 
+## Motivation
 
-## Maintain your proposal repo
+With the proliferation of Large Language Models (LLMs), agentic workflows, and structured prompting, JavaScript and TypeScript runtimes (Node.js, Deno, Bun, and browsers) are the primary environments orchestrating interactions with model inference APIs.
 
-  1. Make your changes to `spec.emu` (ecmarkup uses HTML syntax, but is not HTML, so I strongly suggest not naming it “.html”)
-  1. Any commit that makes meaningful changes to the spec, should run `npm run build` to verify that the build will succeed and the output looks as expected.
-  1. Whenever you update `ecmarkup`, run `npm run build` to verify that the build will succeed and the output looks as expected.
+In these systems, serializing structured data to send in prompts and parsing model outputs back into runtime objects is a dominant operation:
+1. **Token Inefficiency of JSON:** While `JSON` is natively built into ECMAScript (`JSON.stringify` / `JSON.parse`), standard JSON is verbose. In collections of uniform objects, keys are duplicated for every single record, and punctuation delimiters (`{`, `}`, `"`, `:`, `,`) inflate token counts significantly (often by 30% to 60%).
+2. **Cost and Context Window Limits:** LLM token usage incurs direct API costs and consumes limited context windows.
+3. **Userland Bottlenecks:** Parsing and stringifying alternative data formats in userland JavaScript introduces performance and memory overhead. Having native, engine-level support (V8, JavaScriptCore, SpiderMonkey) for a token-efficient notation unlocks zero-overhead serialization for AI workloads.
 
-  [explainer]: https://github.com/tc39/how-we-work/blob/HEAD/explainer.md
+**TOON** addresses this by providing a compact, human- and LLM-friendly serialization format that maps losslessly to the JSON data model, with special syntactic support for tabular collections of objects.
+
+---
+
+## Overview of TOON
+
+TOON maintains full parity with the JSON data model (objects, arrays, strings, numbers, booleans, and null) while offering a significantly more compact syntax:
+
+### Example: Uniform Array of Objects
+
+**JSON (Verbose, high token count):**
+```json
+{
+  "users": [
+    { "id": 1, "name": "Alice", "role": "admin" },
+    { "id": 2, "name": "Bob", "role": "member" }
+  ]
+}
+```
+
+**TOON (Compact, tabular representation):**
+```
+users[2]{id,name,role}:
+  1,Alice,admin
+  2,Bob,member
+```
+
+Features:
+- **Lossless round-tripping** with the JSON data model (`TOON -> JSON -> TOON`).
+- **Tabular syntax** for uniform arrays of objects.
+- **Minimal delimiter noise:** strings only require quotes when ambiguous (containing delimiters, whitespace, or special characters).
+- **Deterministic:** canonical output formatting ensures consistent tokenization and caching.
+
+---
+
+## Proposed API
+
+The proposal introduces a built-in `TOON` namespace object in the global scope, mirroring the ergonomics and conventions of the global `JSON` object:
+
+### `TOON.parse(text [, reviver])`
+
+Parses a string containing TOON-formatted text and constructs the corresponding ECMAScript value or object.
+
+```javascript
+const toonText = `users[2]{id,name,role}:
+  1,Alice,admin
+  2,Bob,member`;
+
+const data = TOON.parse(toonText);
+// Result:
+// {
+//   users: [
+//     { id: 1, name: "Alice", role: "admin" },
+//     { id: 2, name: "Bob", role: "member" }
+//   ]
+// }
+```
+
+### `TOON.stringify(value [, replacer [, space [, options]]])`
+
+Serializes an ECMAScript value into a TOON-formatted string.
+
+```javascript
+const payload = {
+  users: [
+    { id: 1, name: "Alice", role: "admin" },
+    { id: 2, name: "Bob", role: "member" }
+  ]
+};
+
+const toonString = TOON.stringify(payload);
+```
+
+Options may include serialization hints (e.g., controlling tabular threshold or indentation style).
+
+---
+
+## Comparison with Existing Formats
+
+| Feature | JSON | YAML | CSV | TOON |
+|---|---|---|---|---|
+| **ECMAScript Native** | Yes (`JSON.*`) | No | No | **Proposed (`TOON.*`)** |
+| **Token Efficiency** | Low | Medium | High | **High** |
+| **Nested Structure Support** | Yes | Yes | No | **Yes** |
+| **Lossless JSON Model** | Yes | Often | No | **Yes** |
+| **Tabular Array Compression**| No | No | Yes | **Yes** |
+| **Determinism / Simplicity** | High | Low | Medium | **High** |
+
+---
+
+## Open Questions & Discussion Points
+
+1. **Options Parameter:** How should options (e.g., tabular detection heuristics, delimiters) be structured in `TOON.stringify` without diverging too far from `JSON.stringify` signature?
+2. **Raw TOON / Streaming:** Should companion features like `TOON.rawTOON` or streaming parse APIs be included, or deferred to later proposals?
+3. **Standard Grammar:** Coordinating formal ECMA-262 grammar specifications with the upstream [TOON specification](https://github.com/toon-format/spec).
+
+---
+
+## Next Steps
+
+1. Solicit feedback from the JavaScript community and LLM tooling developers on [es.discourse.group](https://es.discourse.group).
+2. Seek a champion among TC39 committee delegates to present at an upcoming TC39 plenary meeting for **Stage 1**.
