@@ -23,6 +23,8 @@ The **TOON (Token-Oriented Object Notation)** format and specification were desi
 
 This proposal is currently **Stage 0** in the [TC39 Process](https://tc39.es/process-document/).
 
+You can browse the [ecmarkup output](https://bertolo1988.github.io/proposal-toon/) or browse the [spec source](https://github.com/bertolo1988/proposal-toon/blob/HEAD/spec.emu).
+
 ## Motivation
 
 With the proliferation of Large Language Models (LLMs), agentic workflows, and structured prompting, JavaScript and TypeScript runtimes (Node.js, Deno, Bun, and browsers) are the primary environments orchestrating interactions with model inference APIs.
