@@ -1,5 +1,10 @@
 # ECMAScript Proposal: `TOON` (Token-Oriented Object Notation)
 
+> [!IMPORTANT]
+> **DISCLAIMER & ATTRIBUTION:**  
+> The **TOON (Token-Oriented Object Notation)** data format and its specification were conceived, created, and authored entirely by **Johann Schopplich** ([@johannschopplich](https://github.com/johannschopplich) / [toon-format](https://github.com/toon-format)).  
+> This repository is **strictly an ECMAScript standardization proposal draft** authored by [@bertolo1988](https://github.com/bertolo1988) to explore adding built-in runtime support (`TOON.parse` / `TOON.stringify`) to JavaScript (ECMA-262). The proposal author does not claim any ownership or authorship of the TOON format itself.
+
 **Stage:** 0  
 **Champions:** *Seeking Champion*  
 **Proposal Drafter:** Tiago Bertolo ([@bertolo1988](https://github.com/bertolo1988))  

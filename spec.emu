@@ -9,6 +9,11 @@ stage: 0
 contributors: Tiago Bertolo, Johann Schopplich (Format Author)
 </pre>
 
+<emu-intro id="sec-attribution">
+  <h1>Attribution & Disclaimer</h1>
+  <p>The TOON (Token-Oriented Object Notation) format and specification were designed and created by <strong>Johann Schopplich</strong> (<a href="https://github.com/toon-format">toon-format</a>). This document is an ECMAScript standardization proposal draft by Tiago Bertolo for adding native `TOON` APIs to ECMA-262.</p>
+</emu-intro>
+
 <emu-clause id="sec-demo-clause">
   <h1>This is an emu-clause</h1>
   <p>This is an algorithm:</p>
